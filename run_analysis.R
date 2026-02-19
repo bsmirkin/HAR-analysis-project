@@ -5,6 +5,7 @@
 
 # Use readr 
 library(readr)
+library(dplyr)
 
 #function to read and format a dataset as a data frame
 #to be repeated for each directory where the HAR type data is stored
@@ -23,15 +24,13 @@ parseHAR <- function(directory = "UCI HAR Dataset",subdirectory = "test") {
         #############################################################################
         # Read common information from the directory                                #
         # Get the column names from features.txt                                    #
-        # Use read_table2 because the whitespace in features.txt is not recognized  #
-        # by read_table                                                             #
-        
-        features_df <- read_table2(file.path(directory,"features.txt"),
+
+        features_df <- read_table(file.path(directory,"features.txt"),
                                    col_names=c("index","feature"),
                                    col_types="ic")
         
         # read in the activity labels similarly
-        activities_df <- read_table2(file.path(directory,"activity_labels.txt"),
+        activities_df <- read_table(file.path(directory,"activity_labels.txt"),
                                      col_names=c("index","activity"),
                                      col_types="ic")
         # make the labels lowercase 
@@ -74,9 +73,22 @@ parseHAR <- function(directory = "UCI HAR Dataset",subdirectory = "test") {
 
 directory = "UCI HAR Dataset"
 
+# 1. Merge the training and test sets to create one dataset
+#       uses parseHAR above to assemble the dataframes then merge them
+
 df <- rbind(parseHAR(directory, subdirectory = "test"), 
-            parseHAR(directory, subdirectory = "train")) %>%
-        select(grep("mean|std|subject|activity",names(df),ignore.case = TRUE))
+            parseHAR(directory, subdirectory = "train")) 
 
+# 2. Extract only the measurements on the mean and standard deviation for
+#       each measurement. Also the new columns subject and activity which
+#.      are from the subject_ and Y_ text files, respectively
 
+df <- df %>% select(grep("mean|std|subject|activity",names(df),ignore.case = TRUE))
 
+# 3. Use descriptive activity names to name the activities in the data set
+#       This is already done within the parseHAR function (see lines 60,65 above)
+
+# 4. Appropriately label the data set with descriptive variable names
+
+# 5. From the data set in step 4, create a second, independent tidy data set
+#       with the average of each variable for each activity and subject
