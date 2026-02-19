@@ -10,6 +10,7 @@ The submission contains the following files:
         - ReadMe.txt - This file describing the project and contents
         - codebook.md - Codebook describing the data and the changes to convert
                 to tidy data for the assignment
+        - codebook.pdf - codebook.md output after Knit
         - run_analysis.R - R scripts used to manipulate the data and prepare 
                 assignment deliverables.
                 
@@ -31,6 +32,7 @@ When run, the run_analysis.R script will perform the following actions
                 for each measurement
         3. Uses descriptive activity names to name the activities in the data set
         4. Labels the data set with descriptive variable names
+                -> See codebook.pdf for the mapping of original to tidy names
         5. From the data set in step 4, creates a second, independent tidy data 
                 set with the average of each variable for each activity and each 
                 subject.

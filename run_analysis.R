@@ -83,12 +83,70 @@ df <- rbind(parseHAR(directory, subdirectory = "test"),
 #       each measurement. Also the new columns subject and activity which
 #.      are from the subject_ and Y_ text files, respectively
 
-df <- df %>% select(grep("mean|std|subject|activity",names(df),ignore.case = TRUE))
+# store the original names for documentation
+datanames <- names(df)
+# get the columns to keep
+columnstokeep <- grep("mean|std|subject|activity",names(df),ignore.case = TRUE)
+# select the columns 
+df <- df %>% select(all_of(columnstokeep))
 
 # 3. Use descriptive activity names to name the activities in the data set
 #       This is already done within the parseHAR function (see lines 60,65 above)
 
 # 4. Appropriately label the data set with descriptive variable names
 
+# The following replaces abbreviations used in the column names
+
+names(df) <- names(df) |>
+        sub("^t", "timedomain", x = _) |>
+        sub("^f", "freqdomain", x = _) |>
+        sub("Acc", "Accelerometer", x = _) |>
+        sub("Gyro", "Gyroscope", x = _) |>
+        sub("\\(t", "\\(timedomain", x = _)
+
+# save the tidy data
+write_csv(df,"tidydata/HARtidydata.csv")
+
+### This section is for creating the codebook variable table only
+# write a table to map the variable names and whether they were kept or not
+
+originalnames <- datanames[-c(1,2)] #remove subject,test
+# perform the same substitations as above but on the entire name list
+newnames <- datanames[-c(1,2)] |>
+        sub("^t", "timedomain", x = _) |>
+        sub("^f", "freqdomain", x = _) |>
+        sub("Acc", "Accelerometer", x = _) |>
+        sub("Gyro", "Gyroscope", x = _) |>
+        sub("\\(t", "\\(timedomain", x = _)
+# which measurements were retained in the data
+retained <- seq_along(originalnames) %in% columnstokeep[-c(1,2)]
+# blank out unretained names for the table
+newnames_clean <- ifelse(retained,newnames,"")
+# make a table for the document
+doc_table <- tibble(
+        original_name = originalnames,
+        new_name = newnames_clean,
+        retained = retained
+)
+library(knitr)
+
+# create markdown table as a string
+md_table <- kable(doc_table, format = "markdown")
+
+# write to a .md file
+writeLines(md_table, "variable_documentation.md")
+
+### End codebook generation section
+
+
+
 # 5. From the data set in step 4, create a second, independent tidy data set
 #       with the average of each variable for each activity and subject
+
+# summarise 
+df_summary <- df %>% group_by(subject, activity) %>% 
+        summarise( across( everything(), mean, .names = "mean_of_{.col}" ),
+        .groups = "drop" )
+
+# save summary per instructions
+write.table(df_summary,"tidydata/HAR_summary_table.txt",row.names = FALSE)
